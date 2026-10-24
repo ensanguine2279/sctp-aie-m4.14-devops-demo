@@ -1,22 +1,15 @@
-name: osv-scanner
+name: OSV Dependency Security Scan
 
 on:
   push:
-    branches: [ main ]
-  schedule:
-    - cron: "30 1 * * 1"   # every Monday 01:30 UTC (09:30 Singapore)
-  workflow_dispatch:       # adds a "Run workflow" button
-
-permissions:
-  actions: read
-  contents: read
-  security-events: write
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
 
 jobs:
-  scan:
-    name: Generate SBOM & Scan Vulnerabilities
+  # Step 1: Build the SBOM and store it as an artifact
+  build-sbom:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -24,15 +17,25 @@ jobs:
       - name: Set up Java JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21' # Adjust to your Java version (17, 21, etc.)
+          java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
 
       - name: Generate CycloneDX SBOM
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 
-      - name: Run OSV-Scanner Action
-        uses: google/osv-scanner-action/osv-scanner-action@v2.7.0 # v2.7.0
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
         with:
-          scan-args: |
-            --sbom=target/bom.json
+          name: target
+          path: target/bom.json
+
+  # Step 2: Pass the artifact to Google's Reusable Workflow
+  osv-scan:
+    needs: build-sbom
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.0
+    with:
+      # download-artifact: target
+      # upload-sarif: false  # Valid here because this is a reusable workflow input!
+      scan-args: |
+        --sbom=target/bom.json
