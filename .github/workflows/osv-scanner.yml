@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
-# Explicitly grant write access to publish SARIF alerts
 permissions:
   contents: read
   security-events: write
@@ -27,14 +26,12 @@ jobs:
 
       - name: Download OSV-Scanner CLI
         run: |
-          curl -sSF https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sh
-          sudo mv ./osv-scanner /usr/local/bin/
+          curl -sSfL https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Generate CycloneDX SBOM
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 
       - name: Generate SARIF Security Report
-        # '|| true' prevents early step failure so the upload step can execute
         run: |
           osv-scanner --sbom=target/bom.json --format=sarif --output=results.sarif || true
 
