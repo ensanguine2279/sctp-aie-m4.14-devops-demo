@@ -32,7 +32,7 @@ jobs:
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 
       - name: Run OSV-Scanner Action
-        uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+        uses: google/osv-scanner-action/osv-scanner-action@v2.7.0 # v2.7.0
         with:
           scan-args: |
             --sbom=target/bom.json
