@@ -31,9 +31,18 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 
-      - name: Generate SARIF Security Report
+      - name: Verify and Generate SARIF Report
         run: |
-          osv-scanner --sbom=target/bom.json --format=sarif > results.sarif || true
+          if [ ! -f target/bom.json ]; then
+            echo "Error: target/bom.json was not generated!"
+            exit 1
+          fi
+          
+          # Run scanner and write directly to results.sarif
+          osv-scanner --sbom=target/bom.json --format=sarif --output=results.sarif || true
+          
+          # Inspect file size to ensure valid output
+          ls -la results.sarif
 
       - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v4
