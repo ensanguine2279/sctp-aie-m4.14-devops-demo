@@ -2,6 +2,6 @@
 # Every entry needs a reason and an expiry date.
 
 [[IgnoredVulns]]
-id = "GHSA-wjgm-6hv5-3cvf"              # copy the exact ID from your alert
+id = "CVE-2026-19032"              # copy the exact ID from your alert
 ignoreUntil = 2026-12-31T00:00:00Z      # after this date the finding comes back
 reason = "Reviewed by hakngrow: testing ignore scanning alert. Fix tracked in issue #77."
