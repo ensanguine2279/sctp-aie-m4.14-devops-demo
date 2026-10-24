@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+# Explicitly grant required permissions for the reusable workflow
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
 jobs:
   # Step 1: Build the SBOM and store it as an artifact
   build-sbom:
