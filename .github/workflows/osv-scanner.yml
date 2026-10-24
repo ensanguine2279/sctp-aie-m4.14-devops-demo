@@ -26,7 +26,8 @@ jobs:
 
       - name: Download OSV-Scanner CLI
         run: |
-          curl -sSfL https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
+          osv-scanner --version
 
       - name: Generate CycloneDX SBOM
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
@@ -38,10 +39,7 @@ jobs:
             exit 1
           fi
           
-          # Run scanner and write directly to results.sarif
           osv-scanner --sbom=target/bom.json --format=sarif --output=results.sarif || true
-          
-          # Inspect file size to ensure valid output
           ls -la results.sarif
 
       - name: Upload SARIF to GitHub Security Tab
