@@ -29,7 +29,13 @@ jobs:
           mkdir -p ~/.local/bin
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           DOWNLOAD_URL=$(curl -s https://api.github.com/repos/google/osv-scanner/releases/latest | grep "browser_download_url" | grep "linux_amd64" | cut -d '"' -f 4 | head -n 1)
-          curl -sSfL "$DOWNLOAD_URL" -o ~/.local/bin/osv-scanner
+          
+          if [[ "$DOWNLOAD_URL" == *.tar.gz ]] || [[ "$DOWNLOAD_URL" == *.tgz ]]; then
+            curl -sSfL "$DOWNLOAD_URL" | tar -xz -C ~/.local/bin osv-scanner
+          else
+            curl -sSfL "$DOWNLOAD_URL" -o ~/.local/bin/osv-scanner
+          fi
+          
           chmod +x ~/.local/bin/osv-scanner
           osv-scanner --version
 
