@@ -13,5 +13,26 @@ permissions:
   security-events: write
 
 jobs:
-  osv-scan:
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+  scan:
+    name: Generate SBOM & Scan Vulnerabilities
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21' # Adjust to your Java version (17, 21, etc.)
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Generate CycloneDX SBOM
+        run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+
+      - name: Run OSV-Scanner Action
+        uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+        with:
+          scan-args: |
+            --sbom=target/bom.json
