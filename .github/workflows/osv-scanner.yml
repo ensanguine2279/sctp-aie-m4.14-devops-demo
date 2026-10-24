@@ -26,7 +26,11 @@ jobs:
 
       - name: Download OSV-Scanner CLI
         run: |
-          curl -sSfL https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
+          mkdir -p ~/.local/bin
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          DOWNLOAD_URL=$(curl -s https://api.github.com/repos/google/osv-scanner/releases/latest | grep "browser_download_url" | grep "linux_amd64" | cut -d '"' -f 4 | head -n 1)
+          curl -sSfL "$DOWNLOAD_URL" -o ~/.local/bin/osv-scanner
+          chmod +x ~/.local/bin/osv-scanner
           osv-scanner --version
 
       - name: Generate CycloneDX SBOM
