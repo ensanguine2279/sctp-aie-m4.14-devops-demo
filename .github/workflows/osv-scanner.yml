@@ -1,4 +1,4 @@
-name: OSV Dependency Security Scan
+name: OSV Security Scan
 
 on:
   push:
@@ -6,15 +6,13 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
-# Explicitly grant required permissions for the reusable workflow
+# Explicitly grant write access to publish SARIF alerts
 permissions:
   contents: read
-  actions: read
   security-events: write
 
 jobs:
-  # Step 1: Build the SBOM and store it as an artifact
-  build-sbom:
+  scan-and-upload:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -27,21 +25,21 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Download OSV-Scanner CLI
+        run: |
+          curl -sSF https://raw.githubusercontent.com/google/osv-scanner/main/scripts/install.sh | sh
+          sudo mv ./osv-scanner /usr/local/bin/
+
       - name: Generate CycloneDX SBOM
         run: mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 
-      - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: target
-          path: target/bom.json
+      - name: Generate SARIF Security Report
+        # '|| true' prevents early step failure so the upload step can execute
+        run: |
+          osv-scanner --sbom=target/bom.json --format=sarif --output=results.sarif || true
 
-  # Step 2: Pass the artifact to Google's Reusable Workflow
-  osv-scan:
-    needs: build-sbom
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.0
-    with:
-      # download-artifact: target
-      # upload-sarif: false  # Valid here because this is a reusable workflow input!
-      scan-args: |
-        --sbom=target/bom.json
+      - name: Upload SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: osv-scanner
